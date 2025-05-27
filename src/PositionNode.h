@@ -23,7 +23,7 @@ private:
      *    @param gripper_angle
      *    @param claw_angle
      */
-    void publish(int angle, int height, int distance, int gripper_angle, int claw_angle);
+    void publish(float angle, float height, float distance, float gripper_angle, float claw_angle);
 
     /**
      *    Callback function for subscription

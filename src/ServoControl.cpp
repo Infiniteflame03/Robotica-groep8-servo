@@ -1,8 +1,5 @@
 #include "ServoControl.h"
 
-#define CW  0
-#define CCW 1
-
 ServoControl::ServoControl(int angleId, int heightId, int distanceId, int gripperAngleId, int clawAngleId) :
 serial_(UART_DEVICE),
 angleId_(angleId),

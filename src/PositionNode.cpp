@@ -22,7 +22,7 @@ PositionNode::PositionNode(ServoControl& servo_control) : Node("position_node"),
     subscription_ = this->create_subscription<servo::msg::Position>(ss.str(), 1, std::bind(&PositionNode::callback, this, _1));
 }
 
-void PositionNode::publish(int angle, int height, int distance, int gripper_angle, int claw_angle) {
+void PositionNode::publish(float angle, float height, float distance, float gripper_angle, float claw_angle) {
     auto msg = servo::msg::Position();
     msg.angle = angle;
     msg.height = height;

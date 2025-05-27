@@ -1,5 +1,5 @@
-uint32 angle
-uint32 height
-uint32 distance
-uint32 gripper_angle
-uint32 claw_angle
+float32 angle
+float32 height
+float32 distance
+float32 gripper_angle
+float32 claw_angle

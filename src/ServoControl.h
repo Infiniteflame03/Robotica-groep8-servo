@@ -8,6 +8,8 @@
 #define UART_DEVICE     "/dev/ttyAMA0"
 #define BAUDRATE        1000000
 #define DIR_PIN         23              // GPIO 23
+#define CW  0
+#define CCW 1
 
 class ServoControl {
 public:
