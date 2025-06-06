@@ -3,7 +3,6 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "AX12A/AX12A.h"
-#include "rclcpp/rclcpp.hpp"
 #include "TCA9548A.h"
 #include "AS5600Sensor.h"
 #include <cmath>
