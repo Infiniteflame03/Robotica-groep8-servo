@@ -1,9 +1,9 @@
 #include "PositionNode.h"
 
-static std::string TOPIC = "servo";
-
 using namespace std::chrono_literals;
 using std::placeholders::_1;
+
+const std::string TOPIC = "servo";
 
 
 PositionNode::PositionNode(ServoControl& servo_control) : Node("position_node"), servoControl_(servo_control) {

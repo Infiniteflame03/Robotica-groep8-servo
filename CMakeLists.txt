@@ -29,10 +29,15 @@ add_executable(main src/main.cpp
         src/PositionNode.h
         src/ServoControl.cpp
         src/ServoControl.h
+        src/AS5600Sensor.cpp
+        src/AS5600Sensor.h
+        src/TCA9548A.cpp
+        src/TCA9548A.h
         src/AX12A/AX12A.cpp
         src/AX12A/AX12A.h
         src/AX12A/HardwareSerialRPi.cpp
-        src/AX12A/HardwareSerialRPi.h)
+        src/AX12A/HardwareSerialRPi.h
+)
 ament_target_dependencies(main
   rclcpp
   std_msgs

@@ -1,19 +1,26 @@
 #ifndef SERVOCONTROL_H
 #define SERVOCONTROL_H
 
+#include "rclcpp/rclcpp.hpp"
 #include "AX12A/AX12A.h"
 #include "rclcpp/rclcpp.hpp"
+#include "TCA9548A.h"
+#include "AS5600Sensor.h"
 #include <cmath>
+#include <fcntl.h>  // voor O_RDWR en open()
+#include <unistd.h>   // close()
 
-#define UART_DEVICE     "/dev/ttyAMA0"
-#define BAUDRATE        1000000
-#define DIR_PIN         23              // GPIO 23
-#define CW  0
-#define CCW 1
+const std::string   UART_DEVICE     = "/dev/ttyAMA0";
+const long          BAUDRATE        = 1000000;
+const unsigned char DIR_PIN         = 23;             // GPIO 23
+const bool          CW              = false;
+const bool          CCW             = true;
+const float         DISTANCE_MARGIN = .5f;
+const float         ANGLE_MARGIN    = 1.f;
 
 class ServoControl {
 public:
-    ServoControl(int angleId, int heightId, int distanceId, int gripperAngleId, int clawAngleId);
+    ServoControl(int angleId, int heightId, int distanceId, int gripperAngleId, int clawAngleId, const char* i2cDevice, int multiplexerAddress);
     ~ServoControl();
 
     void setAngle(float angle);
@@ -28,8 +35,40 @@ public:
     float getGripperAngle(void);
     float getClawAngle(void);
 
+    /**
+     *    Enables/Disables torque for a servo
+     *    @param id of servo
+     *    @param enable
+     */
+    void torque(int id, bool enable);
+    /**
+     *    Turns a servo in a direction
+     *    @param id of servo
+     *    @param direction true = CW, false = CCW
+     *    !!! Only use servo_id's that have been configured to use infinite rotation (not angles)
+     */
+    void turn(int id, bool direction, int speed = 512);
+    /**
+     *    Stops a servo from turning
+     *    @param id of servo
+     *    !!! Only use servo_id's that have been configured to use infinite rotation (not angles)
+     */
+    void stop(int id);
+
 private:
+    void readAngle(int fd, int channel, float& angle);
+    void readDistance(int fd, int channel, float& distance);
+    /**
+     *    Converts a servo position to an angle in °
+     *    @param position to convert
+     *    @return angle in °
+     */
     static float positionToAngle(int position);
+    /**
+     *    Converts an angle in ° to a servo position
+     *    @param angle in ° to convert
+     *    @return position
+     */
     static int angleToPosition(float angle);
     /**
      *    Sets the goal position of a servo
@@ -37,20 +76,7 @@ private:
      *    @param angle (0-1023)
      *    !!! Only use servo_id's that have been configured to use angles (not infinite rotation)
      */
-    void setGoalPosition(int id, int position);
-    /**
-     *    Turns a servo in a direction
-     *    @param id of servo
-     *    @param direction true = CW, false = CCW
-     *    !!! Only use servo_id's that have been configured to use infinite rotation (not angles)
-     */
-    void turn(int id, bool direction);
-    /**
-     *    Stops a servo from turning
-     *    @param id of servo
-     *    !!! Only use servo_id's that have been configured to use infinite rotation (not angles)
-     */
-    void stop(int id);
+    void setGoalPosition(int id, int position, int speed = 512);
     /**
      *    Gets the current position of the servo with specified id
      *    @param id of servo
@@ -64,6 +90,7 @@ private:
      */
 
     HardwareSerialRPi serial_;
+    TCA9548A mux;
 
     // Servo id's
     int angleId_;
@@ -72,12 +99,21 @@ private:
     int gripperAngleId_;
     int clawAngleId_;
 
-    // Current (target) values
-    float angle_;
-    float height_;
-    float distance_;
-    float gripperAngle_;
-    float clawAngle_;
+    // Target values
+    float targetAngle_ =-1;
+    float targetHeight_ = -1;
+    float targetDistance_ = -1;
+    float targetGripperAngle_ = -1;
+    float targetClawAngle_ = -1;
+
+    // Current values
+    float angle_ = -1;
+    float height_ = -1;
+    float distance_ = -1;
+    float gripperAngle_ = -1;
+    float clawAngle_ = -1;
+
+    std::thread angle_read_thread_;
 };
 
 
