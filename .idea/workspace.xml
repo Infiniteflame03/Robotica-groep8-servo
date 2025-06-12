@@ -129,8 +129,8 @@
       <window_info id="Merge Requests" />
       <window_info id="Commit_Guest" show_stripe_button="false" />
       <window_info id="Pull Requests" />
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.5008681" weight="0.2556217" />
-      <window_info active="true" id="Commit" order="1" visible="true" weight="0.2556217" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.5008681" visible="true" weight="0.28207672" />
+      <window_info id="Commit" order="1" weight="0.32969576" />
       <window_info id="Structure" order="2" sideWeight="0.49913195" side_tool="true" weight="0.30588624" />
       <window_info id="Learn" order="3" sideWeight="0.5008681" weight="0.30588624" />
       <window_info id="Bookmarks" order="4" sideWeight="0.49913195" side_tool="true" weight="0.30588624" />
@@ -142,9 +142,9 @@
       <window_info anchor="bottom" id="Version Control" order="0" weight="0.32997882" />
       <window_info anchor="bottom" id="Problems" order="1" />
       <window_info anchor="bottom" id="Problems View" order="2" weight="0.31302965" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="3" visible="true" weight="0.32997882" />
+      <window_info anchor="bottom" id="Terminal" order="3" weight="0.32997882" />
       <window_info anchor="bottom" id="Services" order="4" />
-      <window_info anchor="bottom" id="CMake" order="5" />
+      <window_info active="true" anchor="bottom" id="CMake" order="5" visible="true" weight="0.32997882" />
       <window_info anchor="bottom" id="Python Packages" order="6" weight="0.31620765" />
       <window_info anchor="bottom" id="Vcpkg" order="7" weight="0.31620765" />
       <window_info anchor="bottom" id="Debug" order="8" weight="0.31620765" />
@@ -252,6 +252,7 @@
       <workItem from="1749723949406" duration="9000" />
       <workItem from="1749724991540" duration="10000" />
       <workItem from="1749729493945" duration="19000" />
+      <workItem from="1749729946257" duration="11000" />
     </task>
     <task id="LOCAL-00001" summary="Updated build and run scripts">
       <option name="closed" value="true" />
