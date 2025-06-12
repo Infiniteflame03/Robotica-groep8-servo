@@ -20,11 +20,17 @@ if(NOT WIRINGPI_LIB)
   message(FATAL_ERROR "wiringPi library not found")
 endif()
 
-set(msg_files "msg/Position.msg")
+set(msg_files
+        "msg/Mode.msg"
+        "msg/Position.msg"
+        "msg/Speed.msg"
+)
 rosidl_generate_interfaces(${PROJECT_NAME} ${msg_files})
 ament_export_dependencies(rosidl_default_runtime)
 
 add_executable(main src/main.cpp
+        src/MicrorosTranslation.cpp
+        src/MicrorosTranslation.h
         src/PositionNode.cpp
         src/PositionNode.h
         src/ServoControl.cpp
@@ -33,6 +39,13 @@ add_executable(main src/main.cpp
         src/AS5600Sensor.h
         src/TCA9548A.cpp
         src/TCA9548A.h
+        src/VL53L1X_default_config.cpp
+        src/VL53L1X.cpp
+        src/VL53L1X.hpp
+        src/I2CBus.cpp
+        src/I2CBus.hpp
+        src/GPIOPin.cpp
+        src/GPIOPin.hpp
         src/AX12A/AX12A.cpp
         src/AX12A/AX12A.h
         src/AX12A/HardwareSerialRPi.cpp
@@ -41,7 +54,6 @@ add_executable(main src/main.cpp
 ament_target_dependencies(main
   rclcpp
   std_msgs
-  dynamixel_sdk
 )
 rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 

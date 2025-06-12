@@ -5,6 +5,7 @@
 #include "AX12A/AX12A.h"
 #include "TCA9548A.h"
 #include "AS5600Sensor.h"
+#include "VL53L1X.hpp"
 #include <cmath>
 #include <fcntl.h>  // voor O_RDWR en open()
 #include <unistd.h>   // close()
@@ -14,24 +15,30 @@ const long          BAUDRATE        = 1000000;
 const unsigned char DIR_PIN         = 23;             // GPIO 23
 const bool          CW              = false;
 const bool          CCW             = true;
-const float         DISTANCE_MARGIN = .5f;
+const float         DISTANCE_MARGIN = 100.f;
 const float         ANGLE_MARGIN    = 1.f;
 
 class ServoControl {
 public:
-    ServoControl(int angleId, int heightId, int distanceId, int gripperAngleId, int clawAngleId, const char* i2cDevice, int multiplexerAddress);
+    ServoControl(int angleId, int heightId, int distanceId, int gripperYawId, int gripperPitchId, int clawAngleId, const char* i2cDevice, int multiplexerAddress);
     ~ServoControl();
+
+    void setAngleSpeed(int speed);
+    void setHeightSpeed(int speed);
+    void setDistanceSpeed(int speed);
 
     void setAngle(float angle);
     void setHeight(float height);
     void setDistance(float distance);
-    void setGripperAngle(float gripperAngle);
+    void setGripperYaw(float gripperYaw);
+    void setGripperPitch(float gripperPitch);
     void setClawAngle(float clawAngle);
 
     float getAngle(void);
     float getHeight(void);
     float getDistance(void);
-    float getGripperAngle(void);
+    float getGripperYaw(void);
+    float getGripperPitch(void);
     float getClawAngle(void);
 
     /**
@@ -56,6 +63,12 @@ public:
 
 private:
     void readAngle(int fd, int channel, float& angle);
+    /**
+     *    Measures the distance of a TOF sensor
+     *    @param fd filedescriptor of multiplexer
+     *    @param channel of TOF sensor
+     *    @param distance result variable
+     */
     void readDistance(int fd, int channel, float& distance);
     /**
      *    Converts a servo position to an angle in °
@@ -95,21 +108,24 @@ private:
     int angleId_;
     int heightId_;
     int distanceId_;
-    int gripperAngleId_;
+    int gripperYawId_;
+    int gripperPitchId_;
     int clawAngleId_;
 
     // Target values
     float targetAngle_ =-1;
     float targetHeight_ = -1;
     float targetDistance_ = -1;
-    float targetGripperAngle_ = -1;
+    float targetGripperYaw_ = -1;
+    float targetGripperPitch_ = -1;
     float targetClawAngle_ = -1;
 
     // Current values
     float angle_ = -1;
     float height_ = -1;
     float distance_ = -1;
-    float gripperAngle_ = -1;
+    float gripperYaw_ = -1;
+    float gripperPitch_ = -1;
     float clawAngle_ = -1;
 
     std::thread angle_read_thread_;

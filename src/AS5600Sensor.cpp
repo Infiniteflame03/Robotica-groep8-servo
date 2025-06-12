@@ -7,7 +7,7 @@
 #include <cstdint>
 
 AS5600Sensor::AS5600Sensor(const char* device, int addr)
-    : i2cDevice(device), address(addr), file(-1) {}
+    : file(-1), i2cDevice(device), address(addr) {}
 
 AS5600Sensor::~AS5600Sensor() {
     if (ownsFile && file >= 0) {

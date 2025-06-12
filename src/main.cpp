@@ -1,4 +1,5 @@
 #include "PositionNode.h"
+#include "MicrorosTranslation.h"
 #include "rclcpp/rclcpp.hpp"
 
 class GripperSequenceNode : public rclcpp::Node {
@@ -18,6 +19,9 @@ public:
 
 private:
 	void timerCallback() {
+
+		//servo_.setDistance(700);
+		/*
 		//RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Current position: %d", servo_.getClawAngle());
 		if (step_ < angles_.size()) {
 			servo_.setGripperAngle(angles_[step_]);
@@ -42,6 +46,7 @@ private:
 			timer_->cancel();  // Stop the timer when sequence is done
 			RCLCPP_INFO(this->get_logger(), "Gripper sequence complete.");
 		}
+		*/
 	}
 
 	size_t step_;
@@ -53,12 +58,14 @@ private:
 
 int main(int argc, char ** argv){
 	rclcpp::init(argc, argv);
-	auto servoControl = ServoControl(62, 11, 12, 1, 2, "/dev/i2c-1", 0x70);
-	auto gripper_node = std::make_shared<GripperSequenceNode>(servoControl);
-	//auto pos_node = std::make_shared<PositionNode>(servoControl);
+	auto servoControl = ServoControl(62, 11, 12, 1, 22, 2, "/dev/i2c-1", 0x70);
+	//auto gripper_node = std::make_shared<GripperSequenceNode>(servoControl);
+	auto translator =  std::make_shared<MicrorosTranslation>();
+	auto pos_node = std::make_shared<PositionNode>(servoControl);
 	rclcpp::executors::MultiThreadedExecutor exec;
-	exec.add_node(gripper_node);
-	//exec.add_node(pos_node);
+	exec.add_node(translator);
+	//exec.add_node(gripper_node);
+	exec.add_node(pos_node);
 	exec.spin();
 	rclcpp::shutdown();
 	return 0;
