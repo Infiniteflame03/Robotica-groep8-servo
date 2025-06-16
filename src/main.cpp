@@ -19,6 +19,7 @@ public:
 
 private:
 	void timerCallback() {
+	//servo_.setGripperYaw(90);
 
 		//servo_.setDistance(700);
 		/*

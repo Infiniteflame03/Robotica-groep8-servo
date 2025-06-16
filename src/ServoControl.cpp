@@ -148,15 +148,18 @@ void ServoControl::readDistance(int fd, int channel, float& distance) {
 
 
 void ServoControl::setAngleSpeed(int speed) {
-    turn(angleId_, speed > 0, speed);
+    if (speed == 0) stop(angleId_);
+    else turn(angleId_, speed > 0, speed);
 }
 
 void ServoControl::setHeightSpeed(int speed) {
-    turn(heightId_, speed > 0, speed);
+    if (speed == 0) stop(heightId_);
+    else turn(heightId_, speed > 0, speed);
 }
 
 void ServoControl::setDistanceSpeed(int speed) {
-    turn(distanceId_, speed > 0, speed);
+    if (speed == 0) stop(distanceId_);
+    else turn(distanceId_, speed > 0, speed);
 }
 
 void ServoControl::setAngle(float angle) {
@@ -213,6 +216,7 @@ void ServoControl::setGripperPitch(float gripper_pitch) {
 
 void ServoControl::setClawAngle(float claw_angle) {
     if (claw_angle == targetClawAngle_) return;
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Moving claw to angle %f", claw_angle);
     ax12a.setEndless(clawAngleId_, false);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     setGoalPosition(clawAngleId_, angleToPosition(claw_angle), 128);
@@ -267,7 +271,7 @@ void ServoControl::setGoalPosition(int id, int position, int speed) {
 void ServoControl::turn(int id, bool direction, int speed) {
     if (speed == 0) return;
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Turning servo %d %s", id, direction ? "CW" : "CCW");
-    ax12a.turn(id, direction, speed);
+    ax12a.turn(id, direction, speed >= 0 ? speed : speed*-1);
 }
 
 void ServoControl::stop(int id) {
