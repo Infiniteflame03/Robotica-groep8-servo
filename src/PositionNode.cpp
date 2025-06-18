@@ -16,15 +16,9 @@ PositionNode::PositionNode(ServoControl& servo_control) : Node("position_node"),
         };
     positionTimer_ = this->create_wall_timer(100ms, timer_callback);
 
-    // Reset stringstream for subscription topic
-    ss.str(std::string());
-    ss << TOPIC << "/mode";
-    modeSubscription_ = this->create_subscription<servo::msg::Mode>(ss.str(), 1, std::bind(&PositionNode::modeCallback, this, _1));
+    modeSubscription_ = this->create_subscription<servo::msg::Mode>("servo/mode", 1, std::bind(&PositionNode::modeCallback, this, _1));
     speedSubscription_ = this->create_subscription<servo::msg::Speed>("servo/speed", 1, std::bind(&PositionNode::speedCallback, this, _1));
     speedTimer_ = this->create_wall_timer(50ms, std::bind(&PositionNode::speedTimerCallback, this));
-    //    std::chrono::milliseconds(10),
-    //    std::bind(&GripperSequenceNode::timerCallback, this)
-    //);
 }
 
 void PositionNode::publish(float angle, float height, float distance, float gripper_pitch, float gripper_yaw, float claw_angle) {
@@ -47,6 +41,7 @@ void PositionNode::modeCallback(const servo::msg::Mode::UniquePtr msg) {
     positionSubscription_.reset();
     speedSubscription_.reset();
     speedTimer_->cancel();
+    servoControl_.setupServos(msg->mode);
     switch(msg->mode) {
         case 0:
             ss << "/speed";
@@ -59,7 +54,7 @@ void PositionNode::modeCallback(const servo::msg::Mode::UniquePtr msg) {
         case 3:
             ss << "/target_pos";
             speedSubscription_.reset();
-            positionSubscription_ = this->create_subscription<servo::msg::Position>("servo/mode", 1, std::bind(&PositionNode::positionCallback, this, _1));
+            positionSubscription_ = this->create_subscription<servo::msg::Position>("servo/target_pos", 1, std::bind(&PositionNode::positionCallback, this, _1));
             break;
         default:
             positionSubscription_.reset();
@@ -93,7 +88,7 @@ void PositionNode::speedCallback(const servo::msg::Speed::UniquePtr msg) {
 }
 
 void PositionNode::speedTimerCallback() {
-    RCLCPP_INFO(this->get_logger(), "Speed: %d,%d,%d,%d,%d,%d", angleSpeed_, heightSpeed_, distanceSpeed_, gripperPitch_, gripperYaw_, clawAngle_);
+    //RCLCPP_INFO(this->get_logger(), "Speed: %d,%d,%d,%d,%d,%d", angleSpeed_, heightSpeed_, distanceSpeed_, gripperPitch_, gripperYaw_, clawAngle_);
     if (previousAngleSpeed_ != angleSpeed_) {
         servoControl_.setAngleSpeed(this->angleSpeed_);
         previousAngleSpeed_ = angleSpeed_;
@@ -106,13 +101,13 @@ void PositionNode::speedTimerCallback() {
         servoControl_.setDistanceSpeed(this->distanceSpeed_);
         previousDistanceSpeed_ = distanceSpeed_;
     }
-    if (previousGripperPitch_ != gripperPitch_) {
-        servoControl_.setGripperPitch(this->gripperPitch_);
-        previousGripperPitch_ = gripperPitch_;
-    }
     if (previousGripperYaw_ != gripperYaw_) {
-        servoControl_.setGripperYaw(this->gripperYaw_);
+        servoControl_.setGripperYawSpeed(this->gripperYaw_);
         previousGripperYaw_ = gripperYaw_;
+    }
+    if (previousGripperPitch_ != gripperPitch_) {
+        servoControl_.setGripperPitchSpeed(this->gripperPitch_);
+        previousGripperPitch_ = gripperPitch_;
     }
     if (previousClawAngle_ != clawAngle_) {
         servoControl_.setClawAngle(this->clawAngle_);

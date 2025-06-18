@@ -30,27 +30,18 @@ clawAngleId_(clawAngleId)
     //if (fail) throw 2;
 
     // Configure all servo's to the appropriate mode
-    ax12a.setEndless(angleId_, true);
-    ax12a.setEndless(heightId_, true);
-    ax12a.setEndless(distanceId_, true);
-    ax12a.setEndless(gripperPitchId_, false);
-    ax12a.setAngleLimit(gripperPitchId_, 0, 1023);
-    ax12a.setEndless(gripperYawId_, false);
-    ax12a.setAngleLimit(gripperYawId_, 0, 1023);
-    ax12a.setEndless(clawAngleId_, false);
-    ax12a.setAngleLimit(clawAngleId_, 0, 1023);
-    ax12a.setMaxTorque(clawAngleId_, 1023);
-    ax12a.setCMargin(clawAngleId_, 0, 0);
-    ax12a.setCSlope(clawAngleId_, 0, 0);
+    setupServos(0);
 
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Claw angle: %f° (%d)", getClawAngle(), getCurrentPosition(clawAngleId_));
+    //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Claw angle: %f° (%d)", getClawAngle(), getCurrentPosition(clawAngleId_));
 
-    /*
+
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Initializing multiplexer");
     if (!mux.begin()) {
         RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to initialize multiplexer");
         throw 2;
     }
 
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Initializing sensor thread");
     angle_read_thread_ = std::thread([this, i2cDevice]() {
         try {
             while (true) {
@@ -59,10 +50,15 @@ clawAngleId_(clawAngleId)
                     RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to open i2c port");
                     return;
                 }
-                int channel = 3;
-                //readAngle(fd, channel, angle_);
-                readDistance(fd, channel, distance_);
-                //readDistance(fd, channel, height_);
+                //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Reading sensors...");
+                float heightAngle_ = -1;
+                float distanceAngle_ = -1;
+                readAngle(fd, 0, angle_);
+                readDistance(fd, 3, height_);
+                readAngle(fd, 2, heightAngle_);
+                readDistance(fd, 4, distance_);
+                readAngle(fd, 1, distanceAngle_);
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Angle: %f, Height: %f, Height Angle: %f, Distance: %f, Distance Angle: %f", getAngle(), height_, heightAngle_, distance_, distanceAngle_);
                 close(fd);
             }
         } catch (const std::exception& e) {
@@ -71,13 +67,48 @@ clawAngleId_(clawAngleId)
             RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Unknown exception in thread");
         }
     });
-    */
+    angle_read_thread_.detach();
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Thread created");
 }
 
 ServoControl::~ServoControl() {
     ax12a.end();
     if (angle_read_thread_.joinable()) {
         angle_read_thread_.join();
+    }
+}
+
+void ServoControl::setupServos(int mode) {
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Mode: %d", mode);
+    switch (mode) {
+        case 1:
+        case 2:
+        case 3:
+            ax12a.setEndless(angleId_, true);
+            ax12a.setEndless(heightId_, true);
+            ax12a.setEndless(distanceId_, true);
+            ax12a.setEndless(gripperPitchId_, false);
+            ax12a.setAngleLimit(gripperPitchId_, 0, 1023);
+            ax12a.setEndless(gripperYawId_, false);
+            ax12a.setAngleLimit(gripperYawId_, 0, 1023);
+            ax12a.setEndless(clawAngleId_, false);
+            ax12a.setAngleLimit(clawAngleId_, 0, 1023);
+            ax12a.setMaxTorque(clawAngleId_, 1023);
+            ax12a.setCMargin(clawAngleId_, 0, 0);
+            ax12a.setCSlope(clawAngleId_, 0, 0);
+            break;
+        default:
+            ax12a.setEndless(angleId_, true);
+            ax12a.setEndless(heightId_, true);
+            ax12a.setEndless(distanceId_, true);
+            ax12a.setEndless(gripperPitchId_, true);
+            ax12a.setEndless(gripperYawId_, true);
+            ax12a.setEndless(clawAngleId_, false);
+            ax12a.setAngleLimit(clawAngleId_, 0, 1023);
+            ax12a.setMaxTorque(clawAngleId_, 1023);
+            ax12a.setCMargin(clawAngleId_, 0, 0);
+            ax12a.setCSlope(clawAngleId_, 0, 0);
+            break;
     }
 }
 
@@ -98,7 +129,7 @@ void ServoControl::readAngle(int fd, int channel, float& angle) {
     float temp = 0.f;
     float read_out = 0.f;
     int success_count = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
         bool ok = sensor.readAngleDeg(read_out);
         if (!ok || read_out == 0) {
             RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Sensor on channel %d: Invalid readout", channel);
@@ -109,13 +140,13 @@ void ServoControl::readAngle(int fd, int channel, float& angle) {
     }
     temp /= success_count;
 
-    float difference = 180 - std::abs(std::abs(angle_ - temp) - 180);
-    if (difference > 20 && angle_ != -1)
+    //float difference = 180 - std::abs(std::abs(angle_ - temp) - 180);
+    /*if (difference > 20 && angle_ != -1)
         RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Sensor on channel %d: Ignoring output difference to great (%f)", channel, difference);
-    else {
+    else {*/
         //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Sensor on channel %d: %f°", channel, temp);
         angle = temp;
-    }
+    //}
 }
 
 void ServoControl::readDistance(int fd, int channel, float& distance) {
@@ -136,7 +167,7 @@ void ServoControl::readDistance(int fd, int channel, float& distance) {
     int read_out;
     int success_count = 0;
     sensor.startRanging();
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
         read_out = sensor.getDistance();
         if (read_out >= 16384) continue;
         temp += read_out;
@@ -162,55 +193,79 @@ void ServoControl::setDistanceSpeed(int speed) {
     else turn(distanceId_, speed > 0, speed);
 }
 
+void ServoControl::setGripperYawSpeed(int speed) {
+    if (speed == 0) stop(gripperYawId_);
+    else turn(gripperYawId_, speed > 0, speed);
+}
+
+void ServoControl::setGripperPitchSpeed(int speed) {
+    if (speed == 0) stop(gripperPitchId_);
+    else turn(gripperPitchId_, speed > 0, speed);
+}
+
+void ServoControl::setClawSpeed(int speed) {
+    if (speed == 0) stop(clawAngleId_);
+    else turn(clawAngleId_, speed > 0, speed);
+}
+
 void ServoControl::setAngle(float angle) {
     if (angle == targetAngle_) return;
     targetAngle_ = angle;
-    float diff = fmodf((targetAngle_ - angle_ + 360.0f), 360.0f);
+    float diff = fmodf((targetAngle_ - this->getAngle() + 360.0f), 360.0f);
     bool dir = diff > 180.0f;
     turn(angleId_, dir);
-    std::thread([this, angle]() {
-        while (std::abs(this->angle_ - angle) > ANGLE_MARGIN) {
+    angle_thread_ = std::thread([this, angle]() {
+        while (std::abs(this->getAngle() - angle) > ANGLE_MARGIN) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         stop(this->angleId_);
         targetAngle_ = -1;
-    }).detach();
+    });
 }
 
 void ServoControl::setHeight(float height) {
     if (height == targetHeight_) return;
-    // TODO read height and set appropriate direction
-    bool dir = CW;
-    turn(heightId_, dir);
     targetHeight_ = height;
+    height_thread_ = std::thread([this, height]() {
+        float travel_distance = height_-height;
+        // TODO set appropriate direction (depends on gearing)
+        bool dir = travel_distance <= 0;
+        int speed = 1023;
+        turn(heightId_, dir, speed);
+        while (std::abs(travel_distance) > DISTANCE_MARGIN) {
+            std::cout << "Difference: " << std::abs(travel_distance) << "\tCurrent height:" << height_ << std::endl;
+        }
+        stop(distanceId_);
+        targetHeight_ = -1;
+    });
 }
 
 void ServoControl::setDistance(float distance) {
     if (distance == targetDistance_) return;
     targetDistance_ = distance;
-    std::thread([this, distance]() {
+    std::thread distance_thread_ = std::thread([this, distance]() {
         float travel_distance = distance_-distance;
         // TODO set appropriate direction (depends on gearing)
-        bool dir = distance_-distance <= 0;
-        int speed = 128; // 512
+        bool dir = travel_distance <= 0;
+        int speed = 512;
         turn(distanceId_, dir, speed);
-        while (std::abs(distance_-distance) > DISTANCE_MARGIN) {
-            std::cout << "Difference: " << std::abs(distance_-distance) << "\tCurrent distance:" << distance_ << std::endl;
+        while (std::abs(travel_distance) > DISTANCE_MARGIN) {
+            std::cout << "Difference: " << std::abs(travel_distance) << "\tCurrent distance:" << distance_ << std::endl;
         }
         stop(distanceId_);
         targetDistance_ = -1;
-    }).detach();
+    });
 }
 
 void ServoControl::setGripperYaw(float gripper_yaw) {
     if (gripper_yaw == targetGripperYaw_ || gripper_yaw > 180 || gripper_yaw < 0) return;
-    setGoalPosition(gripperYawId_, angleToPosition(gripper_yaw), 64);
+    setGoalPosition(gripperYawId_, angleToPosition(gripper_yaw), 128);
     targetGripperYaw_ = gripper_yaw;
 }
 
 void ServoControl::setGripperPitch(float gripper_pitch) {
     if (gripper_pitch == targetGripperPitch_ || gripper_pitch > 180 || gripper_pitch < 0) return;
-    setGoalPosition(gripperPitchId_, angleToPosition(gripper_pitch), 64);
+    setGoalPosition(gripperPitchId_, angleToPosition(gripper_pitch), 128);
     targetGripperPitch_ = gripper_pitch;
 }
 
@@ -219,27 +274,27 @@ void ServoControl::setClawAngle(float claw_angle) {
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Moving claw to angle %f", claw_angle);
     ax12a.setEndless(clawAngleId_, false);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    setGoalPosition(clawAngleId_, angleToPosition(claw_angle), 128);
+    claw_angle += 20;
+    setGoalPosition(clawAngleId_, angleToPosition(claw_angle), 192);
     if (claw_angle >= 90) {
-        //setGoalPosition(clawAngleId_, angleToPosition(claw_angle), 64);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         ax12a.setEndless(clawAngleId_, true);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        turn(clawAngleId_, false, 700);
+        turn(clawAngleId_, false, 600);
     }
     targetClawAngle_ = claw_angle;
 }
 
 float ServoControl::getAngle(void) {
-    return 0.f; // TODO
+    return fmodf(angle_ + 360.f - ANGLE_OFFSET, 360.f);
 }
 
 float ServoControl::getHeight(void) {
-    return 0.f; // TODO
+    return height_; // TODO
 }
 
 float ServoControl::getDistance(void) {
-    return 0.f; // TODO
+    return distance_; // TODO
 }
 
 float ServoControl::getGripperYaw(void) {
@@ -251,12 +306,12 @@ float ServoControl::getGripperPitch(void) {
 }
 
 float ServoControl::getClawAngle(void) {
-    return static_cast<float>(getCurrentPosition(clawAngleId_));
-    //return positionToAngle(getCurrentPosition(clawAngleId_));
+    //return static_cast<float>(getCurrentPosition(clawAngleId_));
+    return positionToAngle(getCurrentPosition(clawAngleId_));
 }
 
 float ServoControl::positionToAngle(int position) {
-    return static_cast<float>(position)*1023.f/300.f;
+    return static_cast<float>(position)*300.f/1023.f;
 }
 
 int ServoControl::angleToPosition(float angle) {

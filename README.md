@@ -1,6 +1,7 @@
 # Instructions
 ## INSTALL WIRINGPI LIBRARY  
 
+    cd ~
     git clone https://github.com/WiringPi/WiringPi.git
     cd WiringPi
     ./build
@@ -26,9 +27,15 @@ Easiest **(but definitely not the safest)** way to fix this is:
 Startup requires two programs to run
 ### Micro Ros Agent
 
+    cd ~
     source install/setup.sh
     ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
 
 ### Main Program
+#### Build
+
+    cd ~/ros
+    sudo colcon build --packages-select servo
+#### Run
     
     ros2 run servo main

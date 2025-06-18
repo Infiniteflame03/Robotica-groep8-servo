@@ -10,13 +10,23 @@
 #include <fcntl.h>  // voor O_RDWR en open()
 #include <unistd.h>   // close()
 
-const std::string   UART_DEVICE     = "/dev/ttyAMA0";
-const long          BAUDRATE        = 1000000;
-const unsigned char DIR_PIN         = 23;             // GPIO 23
-const bool          CW              = false;
-const bool          CCW             = true;
-const float         DISTANCE_MARGIN = 100.f;
-const float         ANGLE_MARGIN    = 1.f;
+const std::string   UART_DEVICE        = "/dev/ttyAMA0";
+const long          BAUDRATE           = 1000000;
+const unsigned char DIR_PIN            = 23;             // GPIO 23
+const bool          CW                 = false;
+const bool          CCW                = true;
+const float         DISTANCE_MARGIN    = 100.f;
+const float         ANGLE_MARGIN       = 10.f;
+const float         ANGLE_OFFSET       = 166.6f;
+const float         HEIGHT_MIN         = 394.f;
+const float         HEIGHT_MIN_ANGLE   = 324.f;
+const float         HEIGHT_MAX         = 114.f;
+const float         HEIGHT_MAX_ANGLE   = 86.f;
+const float         DISTANCE_MIN       = 380.f;
+const float         DISTANCE_MIN_ANGLE = 302.7f;
+const float         DISTANCE_MAX       = 40.f;
+const float         DISTANCE_MAX_ANGLE = 64.5f;
+// angle per mm for distance = 1,78
 
 class ServoControl {
 public:
@@ -26,6 +36,9 @@ public:
     void setAngleSpeed(int speed);
     void setHeightSpeed(int speed);
     void setDistanceSpeed(int speed);
+    void setGripperYawSpeed(int speed);
+    void setGripperPitchSpeed(int speed);
+    void setClawSpeed(int speed);
 
     void setAngle(float angle);
     void setHeight(float height);
@@ -41,6 +54,7 @@ public:
     float getGripperPitch(void);
     float getClawAngle(void);
 
+    void setupServos(int mode);
     /**
      *    Enables/Disables torque for a servo
      *    @param id of servo
@@ -129,6 +143,9 @@ private:
     float clawAngle_ = -1;
 
     std::thread angle_read_thread_;
+    std::thread angle_thread_;
+    std::thread height_thread_;
+    std::thread distance_thread_;
 };
 
 
